@@ -1,0 +1,7 @@
+# Compiled class file
+/target/
+
+# Eclipse files
+.classpath
+.project
+.settings/
