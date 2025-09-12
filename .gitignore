@@ -1,7 +1,11 @@
-# Compiled class file
-/target/
-
 # Eclipse files
 .classpath
 .project
 .settings/
+
+# Maven build folder
+/target/
+
+# Other common files to ignore
+*.log
+*.tmp
