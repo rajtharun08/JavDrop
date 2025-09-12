@@ -5,40 +5,38 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.net.UnknownHostException;
+import java.util.function.Consumer;
+import javafx.application.Platform;
 
-import com.javdrop.server.DiscoveryServer;
+// We make this class "Runnable" so we can easily run it in a background thread.
+public class FileSender implements Runnable {
 
-public class FileSender {
-    public static void main(String[] args) {
-        // Start the discovery service in a separate, background thread.
-        Thread discoveryThread = new Thread(new DiscoveryServer());
-        discoveryThread.setDaemon(true); // This makes it a background thread
-        discoveryThread.start();
-        // -----------------------
+    private final String host;
+    private final int port;
+    private final File file;
+    private final Consumer<String> statusUpdater; // A way to send status messages back to the UI
 
-        int port = 6789;
-        System.out.println("FileReceiver is starting... waiting for a client to connect.");
+    public FileSender(String host, int port, File file, Consumer<String> statusUpdater) {
+        this.host = host;
+        this.port = port;
+        this.file = file;
+        this.statusUpdater = statusUpdater;
+    }
 
-        String serverIp = "127.0.0.1"; // Use receiver's IP. 127.0.0.1 is for testing on the same machine.
-        String filePath = "C:/path/to/your/file.txt";// Use a real file path on your system.
-        
-        File file = new File(filePath);
-        if (!file.exists()) {
-            System.out.println("File not found: " + filePath);
-            return;
-        }
-
-        try (Socket socket = new Socket(serverIp, port)) {
-            System.out.println("Connected to server: " + serverIp);
+    @Override
+    public void run() {
+        try (Socket socket = new Socket(host, port)) {
+            // Update UI: Connected
+            Platform.runLater(() -> statusUpdater.accept("Connected to " + host + ". Sending file..."));
 
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
             FileInputStream fis = new FileInputStream(file);
 
+            // Send file metadata
             dos.writeUTF(file.getName());
             dos.writeLong(file.length());
-            System.out.println("Sending file: " + file.getName() + " (" + file.length() + " bytes)");
 
+            // Send file content
             byte[] buffer = new byte[4096];
             int bytesRead;
             while ((bytesRead = fis.read(buffer)) != -1) {
@@ -47,11 +45,13 @@ public class FileSender {
 
             dos.flush();
             fis.close();
-            dos.close();
-            System.out.println("File sent successfully!");
-        } catch (UnknownHostException e) {
-            System.err.println("Server not found: " + e.getMessage());
+
+            // Update UI: Success
+            Platform.runLater(() -> statusUpdater.accept("File '" + file.getName() + "' sent successfully!"));
+
         } catch (IOException e) {
+            // Update UI: Error
+            Platform.runLater(() -> statusUpdater.accept("Error: " + e.getMessage()));
             e.printStackTrace();
         }
     }
