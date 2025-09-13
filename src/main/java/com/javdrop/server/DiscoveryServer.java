@@ -29,13 +29,17 @@ public class DiscoveryServer implements Runnable {
             System.out.println("Discovery server started. Broadcasting our presence...");
 
             // This loop will run forever, shouting our message every 3 seconds.
-            while (true) {
+            while (!Thread.currentThread().isInterrupted()) {
                 socket.send(sendPacket);
-                Thread.sleep(3000); // Wait for 3 seconds to avoid spamming the network
+                Thread.sleep(3000); // Wait 3 seconds
             }
-        } catch (IOException | InterruptedException e) {
-            // If something goes wrong, we'll print an error.
-            e.printStackTrace();
+        } catch (InterruptedException e) {
+            // This is expected when we stop the thread.
+            System.out.println("Discovery server shutting down.");
+        } catch (IOException e) {
+            if (!Thread.currentThread().isInterrupted()) {
+                e.printStackTrace();
+            }
         }
     }
 }

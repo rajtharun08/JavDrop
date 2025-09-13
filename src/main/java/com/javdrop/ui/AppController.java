@@ -1,12 +1,17 @@
 package com.javdrop.ui;
 
-import com.javdrop.client.FileSender; // Used to create the file sending task
+import com.javdrop.client.FileSender;
+import com.javdrop.server.DiscoveryServer;
+
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.function.Consumer;
-
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -14,6 +19,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar; // Import the ProgressBar component
+import javafx.scene.control.ToggleButton;
 import javafx.stage.FileChooser; // Import the FileChooser for selecting files
 import javafx.stage.Stage;
 
@@ -38,6 +44,13 @@ public class AppController {
     @FXML
     private ProgressBar progressBar;
 
+    @FXML
+    private ToggleButton listenToggle; //Link to our ToggleButton
+
+    // --- Threads and Sockets for our server ---
+    private Thread discoveryThread;
+    private Thread receiverThread;
+    private ServerSocket serverSocket;
     /*
      * This method is automatically called by JavaFX after the FXML file has been loaded.
      * It's the perfect place to set up the initial state of your UI.
@@ -46,74 +59,136 @@ public class AppController {
     public void initialize() {
         statusLabel.setText("Searching for devices...");
         progressBar.setVisible(false); // Hide the progress bar when the app starts.
-        startDiscovery(); // Begin searching for other devices on the network.
+        startDiscoveryClient();  // Begin searching for other devices on the network.
     }
 
     /**
-     * Starts a background thread to listen for broadcast messages from servers.
-     * This runs continuously without freezing the user interface.
+     * This method starts the client-side discovery (listening for other servers)
      */
-    private void startDiscovery() {
-        // Define the discovery task that will be run on a separate thread.
+    private void startDiscoveryClient() {
+        // This logic remains the same (copied from our previous version)
         Runnable discoveryTask = () -> {
             try (DatagramSocket socket = new DatagramSocket(9876)) {
                 byte[] receiveData = new byte[1024];
-                while (true) { // Loop forever to continuously listen for new devices
+                while (true) {
                     DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-                    socket.receive(receivePacket); // This line waits until a packet is received.
+                    socket.receive(receivePacket);
                     String message = new String(receivePacket.getData(), 0, receivePacket.getLength());
-
-                    // Check if the message is the one we are looking for.
                     if (message.equals("JavDrop_Server_Here")) {
                         String serverIp = receivePacket.getAddress().getHostAddress();
-
-                        // Use Platform.runLater to safely update the UI from this background thread.
                         Platform.runLater(() -> {
-                            // To avoid duplicates, only add the IP if it's not already in the list.
                             if (!deviceListView.getItems().contains(serverIp)) {
                                 deviceListView.getItems().add(serverIp);
-                                statusLabel.setText("Device found! Select a device to send a file.");
                             }
                         });
                     }
                 }
             } catch (IOException e) {
-                // In a real app, you might want to show an error to the user here.
-                e.printStackTrace();
+                if(!Thread.currentThread().isInterrupted()) {
+                    e.printStackTrace();
+                }
             }
         };
-
-        // Create the background thread, set it as a daemon, and start it.
-        Thread discoveryThread = new Thread(discoveryTask);
-        discoveryThread.setDaemon(true); // Ensures the thread stops when the main app closes.
-        discoveryThread.start();
+        Thread discoveryClientThread = new Thread(discoveryTask);
+        discoveryClientThread.setDaemon(true);
+        discoveryClientThread.start();
     }
 
-    //This method is called when the "Send File" button is clicked.
+    /**
+     * NEW: This method is called when the ToggleButton is clicked.
+     * It starts or stops the server components.
+     */
+    @FXML
+    private void handleListenToggle() {
+        if (listenToggle.isSelected()) {
+            // --- USER WANTS TO START THE SERVER ---
+            listenToggle.setText("Listening...");
+            statusLabel.setText("Server started. Listening for files.");
+
+            // 1. Start the DiscoveryServer (broadcasting our presence)
+            discoveryThread = new Thread(new DiscoveryServer());
+            discoveryThread.setDaemon(true);
+            discoveryThread.start();
+
+            // 2. Start the FileReceiver (listening for incoming files)
+            receiverThread = new Thread(() -> {
+                try {
+                    serverSocket = new ServerSocket(6789);
+                    while (!serverSocket.isClosed()) {
+                        Socket clientSocket = serverSocket.accept(); // Wait for a client
+                        Platform.runLater(() -> statusLabel.setText("Client connected: " + clientSocket.getInetAddress().getHostAddress()));
+                        
+                        // Handle the file transfer in yet another new thread
+                        new Thread(() -> handleIncomingFile(clientSocket)).start();
+                    }
+                } catch (IOException e) {
+                    if (serverSocket != null && !serverSocket.isClosed()) {
+                         e.printStackTrace();
+                    } else {
+                        System.out.println("Server socket closed, receiver thread shutting down.");
+                    }
+                }
+            });
+            receiverThread.setDaemon(true);
+            receiverThread.start();
+
+        } else {
+            // --- USER WANTS TO STOP THE SERVER ---
+            listenToggle.setText("Start Listening for Files");
+            statusLabel.setText("Server stopped. Ready.");
+            stopServerThreads(); // Call our new shutdown helper method
+        }
+    }
+
+    /**
+     * NEW: This helper method contains the logic from our old FileReceiver.
+     * It runs on its own thread for each incoming file.
+     */
+    private void handleIncomingFile(Socket clientSocket) {
+        try (Socket activeSocket = clientSocket) {
+            DataInputStream dis = new DataInputStream(activeSocket.getInputStream());
+            String fileName = dis.readUTF();
+            long fileSize = dis.readLong();
+            
+            Platform.runLater(() -> statusLabel.setText("Receiving file: " + fileName));
+
+            FileOutputStream fos = new FileOutputStream("received_" + fileName);
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            long totalBytesRead = 0;
+
+            while (totalBytesRead < fileSize && (bytesRead = dis.read(buffer, 0, (int) Math.min(buffer.length, fileSize - totalBytesRead))) != -1) {
+                fos.write(buffer, 0, bytesRead);
+                totalBytesRead += bytesRead;
+            }
+
+            fos.close();
+            Platform.runLater(() -> statusLabel.setText("File received: " + fileName));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @FXML
     private void handleSendFileButton() {
-
+        // This entire method remains the same as our last correct version
         String selectedIp = deviceListView.getSelectionModel().getSelectedItem();
         if (selectedIp == null) {
             showAlert("No Device Selected", "Please select a device from the list.");
             return;
         }
+
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select File to Send");
         File selectedFile = fileChooser.showOpenDialog(new Stage());
 
         if (selectedFile != null) {
-
-            System.out.println("DISABLING BUTTONS NOW..."); 
-            
             sendFileButton.setDisable(true);
             deviceListView.setDisable(true);
-            
             statusLabel.setText("Preparing to send " + selectedFile.getName() + "...");
             progressBar.setVisible(true);
             progressBar.setProgress(0.0);
 
-            // Create a lambda function for our new error handler
             Consumer<String> errorHandler = (errorMessage) -> {
                 showAlert("Transfer Error", errorMessage);
                 sendFileButton.setDisable(false);
@@ -122,12 +197,10 @@ public class AppController {
             
             Consumer<String> successHandler = (successMessage) -> {
                 statusLabel.setText(successMessage);
-                sendFileButton.setDisable(false); // Re-enable controls
-                deviceListView.setDisable(false); // Re-enable controls
+                sendFileButton.setDisable(false);
+                deviceListView.setDisable(false);
             };
 
-
-            // Update the FileSender constructor call to include the new errorHandler
             FileSender senderTask = new FileSender(selectedIp, 6789, selectedFile,  successHandler, errorHandler, progressBar);
             Thread senderThread = new Thread(senderTask);
             senderThread.setDaemon(true);
@@ -136,10 +209,39 @@ public class AppController {
     }
     
     private void showAlert(String title, String message) {
+        // This method also remains the same
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle(title);
-        alert.setHeaderText(null); // We don't need a header.
+        alert.setHeaderText(null);
         alert.setContentText(message);
-        alert.showAndWait(); // This shows the alert and waits for the user to close it.
+        alert.showAndWait();
+    }
+    
+    // --- NEW HELPER METHOD ---
+    // Contains the logic to cleanly shut down our server threads.
+    private void stopServerThreads() {
+        // 1. Stop the DiscoveryServer broadcast
+        if (discoveryThread != null) {
+            discoveryThread.interrupt();
+        }
+        // 2. Stop the FileReceiver loop
+        if (serverSocket != null && !serverSocket.isClosed()) {
+            try {
+                serverSocket.close(); // This will cause the .accept() loop to throw an exception
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // --- NEW SHUTDOWN METHOD ---
+    /**
+     * This public method is called by Main.java when the user closes the window.
+     * This ensures all background server threads are stopped gracefully.
+     */
+    public void shutdown() {
+        System.out.println("Shutting down servers...");
+        stopServerThreads(); // Stop the server threads
+        // The client-side discovery thread is already a daemon, so it will close automatically.
     }
 }
