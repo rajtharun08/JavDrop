@@ -39,7 +39,7 @@
                     <configuration>
                         <transformers>
                             <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                <mainClass>com.javdrop.ui.Main</mainClass>
+                                <mainClass>com.javdrop.ui.Launcher</mainClass>
                             </transformer>
                         </transformers>
                     </configuration>
