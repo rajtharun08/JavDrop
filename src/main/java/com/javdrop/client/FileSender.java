@@ -33,6 +33,7 @@ public class FileSender implements Runnable {
             Platform.runLater(() -> statusUpdater.accept("Connected. Sending file..."));
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
             FileInputStream fis = new FileInputStream(file);
+
             dos.writeUTF(file.getName());
             dos.writeLong(file.length());
 
@@ -40,21 +41,30 @@ public class FileSender implements Runnable {
             int bytesRead;
             long totalBytesSent = 0;
             long fileSize = file.length();
+            
+            int lastPercentReported = 0; 
 
-            // This is the main transfer loop
             while ((bytesRead = fis.read(buffer)) != -1) {
                 dos.write(buffer, 0, bytesRead);
                 totalBytesSent += bytesRead;
-                // Calculate progress as a value between 0.0 and 1.0
+                
                 double progress = (double) totalBytesSent / fileSize;
-                // Safely update the progress bar on the UI thread
-                Platform.runLater(() -> progressBar.setProgress(progress));
+                int percentDone = (int) (progress * 100); 
+                
+                if (percentDone > lastPercentReported) {
+                    lastPercentReported = percentDone;
+                    Platform.runLater(() -> progressBar.setProgress(progress));
+                }
             }
+
+            dos.flush();
             fis.close();
-            Platform.runLater(() -> statusUpdater.accept("File sent successfully!"));
-        } catch (IOException e) {
+
+            Platform.runLater(() -> progressBar.setProgress(1.0)); 
+            Platform.runLater(() -> statusUpdater.accept("File '" + file.getName() + "' sent successfully!"));
+
+        } catch (IOException e) { // This is now the simplified, original catch block
             Platform.runLater(() -> {
-                statusUpdater.accept("Error: " + e.getMessage());
                 errorHandler.accept("Connection lost or file transfer failed: " + e.getMessage());
                 progressBar.setVisible(false); // Hide bar on error
             });

@@ -22,6 +22,10 @@
     -fx-background-color: #596A91; /* A lighter color when hovered */
 }
 
+.button:disabled {
+    -fx-opacity: 0.5; /* Makes the button look faded/transparent */
+    -fx-background-color: #4A587A; /* Ensures it keeps our base color */
+}
 /* Style for the progress bar */
 .progress-bar .bar {
     -fx-background-color: #61AFEF; /* A nice blue for the bar */

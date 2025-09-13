@@ -92,6 +92,7 @@ public class AppController {
     //This method is called when the "Send File" button is clicked.
     @FXML
     private void handleSendFileButton() {
+
         String selectedIp = deviceListView.getSelectionModel().getSelectedItem();
         if (selectedIp == null) {
             showAlert("No Device Selected", "Please select a device from the list.");
@@ -102,6 +103,12 @@ public class AppController {
         File selectedFile = fileChooser.showOpenDialog(new Stage());
 
         if (selectedFile != null) {
+
+            System.out.println("DISABLING BUTTONS NOW..."); 
+            
+            sendFileButton.setDisable(true);
+            deviceListView.setDisable(true);
+            
             statusLabel.setText("Preparing to send " + selectedFile.getName() + "...");
             progressBar.setVisible(true);
             progressBar.setProgress(0.0);
@@ -109,10 +116,19 @@ public class AppController {
             // Create a lambda function for our new error handler
             Consumer<String> errorHandler = (errorMessage) -> {
                 showAlert("Transfer Error", errorMessage);
+                sendFileButton.setDisable(false);
+                deviceListView.setDisable(false);
+            };
+            
+            Consumer<String> successHandler = (successMessage) -> {
+                statusLabel.setText(successMessage);
+                sendFileButton.setDisable(false); // Re-enable controls
+                deviceListView.setDisable(false); // Re-enable controls
             };
 
+
             // Update the FileSender constructor call to include the new errorHandler
-            FileSender senderTask = new FileSender(selectedIp, 6789, selectedFile, statusLabel::setText, errorHandler, progressBar);
+            FileSender senderTask = new FileSender(selectedIp, 6789, selectedFile,  successHandler, errorHandler, progressBar);
             Thread senderThread = new Thread(senderTask);
             senderThread.setDaemon(true);
             senderThread.start();
