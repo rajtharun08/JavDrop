@@ -4,8 +4,14 @@ A cross-platform desktop application built in Java for fast and reliable file tr
 
 This application uses a multi-threaded client-server model. UDP broadcasting is used for automatic device discovery, and TCP sockets are used for fast, reliable data transfer. The user interface is built with JavaFX and styled with CSS.
 
-![javDrop App](https-placeholder-for-your-screenshot.png)
-*(Recommendation: Take a screenshot of your app, add it to your project, and replace the link above)*
+<p align="center">
+  <img src="./docs/screenshot-1.png" alt="Description of first image" width="400">
+  <img src="./docs/screenshot-2.png" alt="Description of second image" width="400">
+  <img src="./docs/screenshot-1.png" alt="Description of first image" width="400">
+  <img src="./docs/screenshot-2.png" alt="Description of second image" width="400">
+  
+</p>
+
 
 ---
 
@@ -29,10 +35,10 @@ This project is built with Maven. The final executable "fat JAR" can be built wi
 mvn clean package
 This will generate a file at /target/javdrop-0.0.1-SNAPSHOT.jar.
 
-**How to Use**
+How to Use
 This application requires two components to be running: a Receiver (server) and a Sender (client GUI). You only need the single executable JAR file created in the build step.
 
-**1. On the Receiving Computer:**
+1. On the Receiving Computer:
 Open a terminal or command prompt and run the following command to start the FileReceiver in server mode:
 
 Bash
@@ -40,7 +46,7 @@ Bash
 java -cp javdrop-0.0.1-SNAPSHOT.jar com.javdrop.server.FileReceiver
 The console will print: "Server is starting... waiting for a client to connect."
 
-**2. On the Sending Computer:**
+2. On the Sending Computer:
 Simply double-click the executable javdrop-0.0.1-SNAPSHOT.jar file (or run java -jar javdrop-0.0.1-SNAPSHOT.jar) to launch the GUI.
 
 The GUI will automatically discover the running receiver, and its IP address will appear in the list. You can then select the IP, click "Send File," and choose a file to transfer it.
