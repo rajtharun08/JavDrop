@@ -10,12 +10,15 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // This line loads our user interface from the FXML file.
         Parent root = FXMLLoader.load(getClass().getResource("app.fxml"));
-        
-        // This sets up the main window (called a "Stage") with our UI.
         primaryStage.setTitle("javDrop");
-        primaryStage.setScene(new Scene(root, 400, 500)); // Width=400, Height=500
+        
+        Scene scene = new Scene(root, 400, 500); // Create the scene
+        
+        // Load and apply the CSS stylesheet
+        scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
+        
+        primaryStage.setScene(scene); // Set the scene on the stage
         primaryStage.show();
     }
 

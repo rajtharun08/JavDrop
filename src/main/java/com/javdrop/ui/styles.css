@@ -1,0 +1,55 @@
+/* This is the main background of our application window */
+.root {
+    -fx-background-color: #2D3447;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+/* Style for all labels */
+.label {
+    -fx-text-fill: #EAEAEA; /* A light grey for text color */
+    -fx-font-size: 14px;
+}
+
+/* Style for the button */
+.button {
+    -fx-background-color: #4A587A;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5; /* Rounded corners */
+}
+
+.button:hover {
+    -fx-background-color: #596A91; /* A lighter color when hovered */
+}
+
+/* Style for the progress bar */
+.progress-bar .bar {
+    -fx-background-color: #61AFEF; /* A nice blue for the bar */
+    -fx-padding: 3px;
+    -fx-background-insets: 0;
+    -fx-background-radius: 2;
+}
+.progress-bar .track {
+    -fx-background-color: #4A587A; /* Background of the bar */
+    -fx-background-insets: 0;
+    -fx-background-radius: 2;
+}
+
+/* Style for the list view */
+.list-view {
+    -fx-background-color: #3B4252;
+    -fx-border-color: #4A587A;
+}
+
+/* Style for each cell/row in the list view */
+.list-cell {
+    -fx-background-color: #3B4252;
+    -fx-text-fill: #EAEAEA;
+    -fx-font-size: 16px;
+}
+
+/* Style for a selected cell in the list view */
+.list-cell:filled:selected {
+    -fx-background-color: #61AFEF; /* Same blue as the progress bar */
+    -fx-text-fill: white;
+}

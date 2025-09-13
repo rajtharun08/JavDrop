@@ -14,14 +14,16 @@ public class FileSender implements Runnable {
     private final int port;
     private final File file;
     private final Consumer<String> statusUpdater;
+    private final Consumer<String> errorHandler;
     private final ProgressBar progressBar; // Add field for the ProgressBar
 
     // Update the constructor to accept the ProgressBar
-    public FileSender(String host, int port, File file, Consumer<String> statusUpdater, ProgressBar progressBar) {
+    public FileSender(String host, int port, File file, Consumer<String> statusUpdater, Consumer<String> errorHandler, ProgressBar progressBar) {
         this.host = host;
         this.port = port;
         this.file = file;
         this.statusUpdater = statusUpdater;
+        this.errorHandler=errorHandler;
         this.progressBar = progressBar;
     }
 
@@ -53,6 +55,7 @@ public class FileSender implements Runnable {
         } catch (IOException e) {
             Platform.runLater(() -> {
                 statusUpdater.accept("Error: " + e.getMessage());
+                errorHandler.accept("Connection lost or file transfer failed: " + e.getMessage());
                 progressBar.setVisible(false); // Hide bar on error
             });
             e.printStackTrace();

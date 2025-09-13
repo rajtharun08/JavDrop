@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.util.function.Consumer;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -90,34 +92,33 @@ public class AppController {
     //This method is called when the "Send File" button is clicked.
     @FXML
     private void handleSendFileButton() {
-        // 1. Get the device the user has selected from the list.
         String selectedIp = deviceListView.getSelectionModel().getSelectedItem();
         if (selectedIp == null) {
-            showAlert("No Device Selected", "Please select a device from the list to send the file to.");
-            return; // Stop the method if nothing is selected.
+            showAlert("No Device Selected", "Please select a device from the list.");
+            return;
         }
-
-        // 2. Open a standard "Open File" dialog to let the user choose a file.
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select File to Send");
-        File selectedFile = fileChooser.showOpenDialog(new Stage()); // Requires a new Stage/Window.
+        File selectedFile = fileChooser.showOpenDialog(new Stage());
 
-        // 3. If the user selected a file (and didn't click cancel), proceed.
         if (selectedFile != null) {
-            // Update the UI to show that we are starting the transfer.
             statusLabel.setText("Preparing to send " + selectedFile.getName() + "...");
-            progressBar.setVisible(true); // Make the progress bar visible.
-            progressBar.setProgress(0.0);   // Reset its progress to the beginning.
+            progressBar.setVisible(true);
+            progressBar.setProgress(0.0);
 
-            // 4. Create and run the FileSender task on a new background thread.
-            // We pass it the IP, port, file, a way to update the status label, and the progress bar.
-            FileSender senderTask = new FileSender(selectedIp, 6789, selectedFile, statusLabel::setText, progressBar);
+            // Create a lambda function for our new error handler
+            Consumer<String> errorHandler = (errorMessage) -> {
+                showAlert("Transfer Error", errorMessage);
+            };
+
+            // Update the FileSender constructor call to include the new errorHandler
+            FileSender senderTask = new FileSender(selectedIp, 6789, selectedFile, statusLabel::setText, errorHandler, progressBar);
             Thread senderThread = new Thread(senderTask);
             senderThread.setDaemon(true);
             senderThread.start();
         }
     }
-
+    
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle(title);
