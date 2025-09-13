@@ -5,10 +5,10 @@ A cross-platform desktop application built in Java for fast and reliable file tr
 This application uses a multi-threaded client-server model. UDP broadcasting is used for automatic device discovery, and TCP sockets are used for fast, reliable data transfer. The user interface is built with JavaFX and styled with CSS.
 
 <p align="center">
-  <img src="./docs/screenshot-1.png" alt="Description of first image" width="400">
-  <img src="./docs/screenshot-2.png" alt="Description of second image" width="400">
-  <img src="./docs/screenshot-1.png" alt="Description of first image" width="400">
-  <img src="./docs/screenshot-2.png" alt="Description of second image" width="400">
+  <img src="./docs/screenshot-1.png" alt="Description of first image" >
+  <img src="./docs/screenshot-2.png" alt="Description of second image" >
+  <img src="./docs/screenshot-1.png" alt="Description of first image" >
+  <img src="./docs/screenshot-2.png" alt="Description of second image" >
   
 </p>
 
