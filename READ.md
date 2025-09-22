@@ -1,52 +1,63 @@
-#javDrop 🚀
+# javDrop 🚀
 
-A cross-platform desktop application built in Java for fast and reliable file transfer over a local area network (LAN).
+![javDrop Main UI](./docs/screenshot-1.png)
 
-This application uses a multi-threaded client-server model. UDP broadcasting is used for automatic device discovery, and TCP sockets are used for fast, reliable data transfer. The user interface is built with JavaFX and styled with CSS.
+A cross-platform desktop application built in Java for fast and reliable file transfer over a local area network (LAN). `javDrop` allows users to automatically discover other devices and transfer files securely without needing an internet connection, cloud services, or USB drives.
 
-<p align="center">
-  <img src="./docs/screenshot-1.png" alt="Description of first image" >
-  <img src="./docs/screenshot-2.png" alt="Description of second image" >
-  <img src="./docs/screenshot-1.png" alt="Description of first image" >
-  <img src="./docs/screenshot-2.png" alt="Description of second image" >
-  
-</p>
-
+This application is built from scratch and features a multi-threaded, client-server architecture, a modern JavaFX GUI, and a robust build process using Maven.
 
 ---
 
-## Features
-* **Automatic Device Discovery:** No need to manually type IP addresses. The application automatically discovers other `javDrop` clients on the local network.
-* **High-Speed File Transfer:** Uses a TCP socket stream for fast and reliable transfer of any file type.
-* **Modern User Interface:** A clean, responsive GUI built with JavaFX and styled with a modern dark theme.
-* **Real-time Feedback:** Features a progress bar and status label to provide real-time feedback on transfer progress.
-* **Multi-Threaded Server:** The file receiver is multi-threaded, allowing it to handle multiple incoming file transfers simultaneously.
-* **Robust Error Handling:** The UI gracefully handles connection failures and other transfer errors with user-friendly alerts.
+## 🌟 Features
 
-## Tech Stack
+* **All-in-One Application:** A single, executable JAR file that functions as both a client (sender) and a server (receiver).
+* **Automatic Device Discovery:** Uses UDP broadcasting to automatically find other `javDrop` users on the local network.
+* **High-Speed File Transfer:** Uses multi-threaded TCP sockets for fast, reliable, and simultaneous file transfers.
+* **Modern & Responsive GUI:** A clean, dark-themed user interface built with JavaFX and styled with CSS.
+* **Real-time Feedback:** The UI is fully asynchronous, with a live progress bar and status label to provide feedback on transfers without freezing the app.
+* **Robust Error Handling:** Gracefully handles common network errors (like connection loss) with user-friendly alert pop-ups.
+* **Safe UI State:** All controls (buttons, lists) are correctly disabled during a transfer to prevent conflicting operations.
+
+---
+
+## 📸 Showcase
+
+Here is the application in action.
+
+<p align="center">
+  <img src="./docs/screenshot_discovery.png" alt="Discovering devices" width="400">
+&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="./docs/file_sent.png" alt="File sent" width="400">
+</p>
+
+---
+
+## 🛠️ Tech Stack
+
 * **Core:** Java (JDK 11)
 * **GUI:** JavaFX
-* **Build:** Apache Maven (with Maven Shade Plugin)
-* **Networking:** Java Sockets (TCP for file transfer, UDP for discovery)
+* **Build:** Apache Maven (Maven Shade Plugin)
+* **Networking:** Java Sockets (TCP/IP & UDP)
+* **Threading:** `java.lang.Thread`, `Runnable`, and `Platform.runLater`
 
 ## How to Build
-This project is built with Maven. The final executable "fat JAR" can be built with the following command:
-```bash
-mvn clean package
-This will generate a file at /target/javdrop-0.0.1-SNAPSHOT.jar.
 
-How to Use
-This application requires two components to be running: a Receiver (server) and a Sender (client GUI). You only need the single executable JAR file created in the build step.
+This project is built using Maven. To create the final executable "fat JAR":
+1.  Clone the repository.
+2.  Run the Maven command:
+    ```bash
+    mvn clean package
+    ```
+3.  The executable file will be at `/target/javdrop-0.0.1-SNAPSHOT.jar`.
 
-1. On the Receiving Computer:
-Open a terminal or command prompt and run the following command to start the FileReceiver in server mode:
+## How to Use
 
-Bash
+You only need the single executable `.jar` file created in the build step.
 
-java -cp javdrop-0.0.1-SNAPSHOT.jar com.javdrop.server.FileReceiver
-The console will print: "Server is starting... waiting for a client to connect."
-
-2. On the Sending Computer:
-Simply double-click the executable javdrop-0.0.1-SNAPSHOT.jar file (or run java -jar javdrop-0.0.1-SNAPSHOT.jar) to launch the GUI.
-
-The GUI will automatically discover the running receiver, and its IP address will appear in the list. You can then select the IP, click "Send File," and choose a file to transfer it.
+1.  **To Run the App:** Double-click the `javdrop-0.0.1-SNAPSHOT.jar` file to launch the GUI.
+2.  **To Receive Files:** On the computer that wants to receive files, click the **"Start Listening for Files"** button. The button will toggle to "Listening...".
+3.  **To Send Files:** On your computer, the receiving computer's IP address will appear in the "Discovered Devices" list.
+    * Select the IP address.
+    * Click the **"Send File"** button.
+    * Choose a file from the dialog.
+    * The file will transfer with live progress updates.
