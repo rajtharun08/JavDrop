@@ -56,7 +56,7 @@ You only need the single executable `.jar` file created in the build step.
 
 1.  **To Run the App:** Double-click the `javdrop-0.0.1-SNAPSHOT.jar` file to launch the GUI.
 2.  **To Receive Files:** On the computer that wants to receive files, click the **"Start Listening for Files"** button. The button will toggle to "Listening...".
-3.  **To Send Files:** On your computer, the receiving computer's IP address will appear in the "Discovered Devices" list.
+3.  **To Send Files:** On your computer, the receiving computer's IP address will appear in the "Discovered Devices" list
     * Select the IP address.
     * Click the **"Send File"** button.
     * Choose a file from the dialog.
